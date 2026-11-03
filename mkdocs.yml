@@ -1,0 +1,60 @@
+# Public Daml Reason developer guide.
+# docs/internal stays in the private canton-mcp-go repo.
+
+site_name: Daml Reason
+site_description: Developer guide for the daml_reason MCP tool (~10 minutes)
+site_url: https://chainsafe.github.io/daml-reason-docs/
+
+repo_url: https://github.com/ChainSafe/daml-reason-docs
+repo_name: ChainSafe/daml-reason-docs
+
+docs_dir: docs/guide
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+
+exclude_docs: |
+  SUMMARY.md
+
+nav:
+  - Start here: index.md
+  - 1. What it is: 01-what-it-is.md
+  - 2. Phase A: 02-phase-a.md
+  - 3. Phase B: 03-phase-b.md
+  - 4. Agent draft loop: 04-agent-loop.md
+  - 5. Try it locally: 05-try-it.md
+  - 6. Where next: 06-further.md
+  - 7. CI semantic gate: ci-daml-reason.md
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - toc:
+      permalink: true
+
+plugins:
+  - search

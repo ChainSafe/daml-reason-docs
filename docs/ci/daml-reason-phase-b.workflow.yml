@@ -1,0 +1,62 @@
+# TEMPLATE — for DAML application repos only (not canton-mcp-go).
+# Copy to YOUR repo as .github/workflows/daml-reason.yml
+# Secrets: DAML_REASON_MCP_URL, DAML_REASON_API_KEY
+# Docs: https://chainsafe.github.io/daml-reason-docs/ci-daml-reason/
+
+name: daml_reason semantic gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.daml"
+
+jobs:
+  phase-b:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read business intent
+        id: intent
+        env:
+          INTENT_FILE: .daml-reason/intent.md
+        run: |
+          if [[ -f "$INTENT_FILE" ]]; then
+            intent="$(cat "$INTENT_FILE")"
+          else
+            intent="${{ github.event.pull_request.title }}"
+          fi
+          echo "text<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$intent" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Collect changed DAML
+        id: daml
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT \
+            "${{ github.event.pull_request.base.sha }}" HEAD -- '*.daml' || true)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No .daml changes; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          code=""
+          for f in "${files[@]}"; do
+            code+="# --- ${f} ---\\n"
+            code+="$(cat "$f")\\n\\n"
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "code<<EOF" >> "$GITHUB_OUTPUT"
+          printf '%b' "$code" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: daml_reason Phase B
+        if: steps.daml.outputs.skip != 'true'
+        uses: ChainSafe/canton-mcp-go/.github/actions/daml-reason-phase-b@main
+        with:
+          mcp-url: ${{ secrets.DAML_REASON_MCP_URL }}
+          api-key: ${{ secrets.DAML_REASON_API_KEY }}
+          business-intent: ${{ steps.intent.outputs.text }}
+          daml-code: ${{ steps.daml.outputs.code }}
+          fail-on-outcomes: fail
